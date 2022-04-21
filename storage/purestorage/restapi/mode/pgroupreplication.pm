@@ -27,6 +27,12 @@ use warnings;
 use centreon::plugins::misc;
 use DateTime;
 
+sub prefix_pgroup_output {
+    my ($self, %options) = @_;
+    
+    return "Protection group '" . $options{instance_value}->{display} . "' replication ";
+}
+
 sub set_counters {
     my ($self, %options) = @_;
     
@@ -35,55 +41,50 @@ sub set_counters {
     ];
     
     $self->{maps_counters}->{pgroup} = [
-        { label => 'progress', set => {
-                key_values => [ { name => 'progress' }, { name => 'display' } ],
-                output_template => 'Progress : %s %%',
+        { label => 'progress', nlabel => 'protectiongroup.replication.progress.percentage', set => {
+                key_values => [ { name => 'progress' } ],
+                output_template => 'progress: %s %%',
                 perfdatas => [
-                    { label => 'progress', value => 'progress', template => '%s', unit => '%',
-                      min => 0, max => 100, label_extra_instance => 1, instance_use => 'display' },
-                ],
+                    { template => '%s', unit => '%', min => 0, max => 100, label_extra_instance => 1 }
+                ]
             }
         },
-        { label => 'creation', set => {
-                key_values => [ { name => 'creation_human' }, { name => 'creation_seconds' }, { name => 'display' } ],
+        { label => 'creation', nlabel => 'protectiongroup.replication.creation.seconds', set => {
+                key_values => [ { name => 'creation_human' }, { name => 'creation_seconds' } ],
                 threshold_use => 'creation_seconds',
-                output_template => 'Creation Time : %s',
+                output_template => 'creation time: %s',
                 perfdatas => [
-                    { label => 'creation', value => 'creation_seconds', template => '%d', 
-                      unit => 's', min => 0, label_extra_instance => 1, instance_use => 'display' },
-                ],
+                    { template => '%d', unit => 's', min => 0, label_extra_instance => 1 }
+                ]
             }
         },
-        { label => 'duration', set => {
-                key_values => [ { name => 'duration_human' }, { name => 'duration_seconds' }, { name => 'display' } ],
+        { label => 'duration', nlabel => 'protectiongroup.replication.duration.seconds', set => {
+                key_values => [ { name => 'duration_human' }, { name => 'duration_seconds' } ],
                 threshold_use => 'duration_seconds',
-                output_template => 'Duration : %s',
+                output_template => 'duration: %s',
                 perfdatas => [
-                    { label => 'duration', value => 'duration_seconds', template => '%d', 
-                      unit => 's', min => 0, label_extra_instance => 1, instance_use => 'display' },
-                ],
+                    { value => 'duration_seconds', template => '%d', unit => 's', min => 0, label_extra_instance => 1 }
+                ]
             }
         },
-        { label => 'physical-bytes-written', set => {
-                key_values => [ { name => 'physical_bytes_written' }, { name => 'display' } ],
-                output_template => 'Physical Bytes Written : %s %s',
+        { label => 'physical-bytes-written', nlabel => 'protectiongroup.replication.written.bytes', set => {
+                key_values => [ { name => 'physical_bytes_written' } ],
+                output_template => 'physical bytes written: %s %s',
                 output_change_bytes => 1,
                 perfdatas => [
-                    { label => 'physical_bytes_written', value => 'physical_bytes_written', template => '%s',
-                      unit => 'B', min => 0, label_extra_instance => 1, instance_use => 'display' },
-                ],
+                    { template => '%s',unit => 'B', min => 0, label_extra_instance => 1 }
+                ]
             }
         },
-        { label => 'data-transferred', set => {
+        { label => 'data-transferred', nlabel => 'protectiongroup.replication.data.transferred.bytes', set => {
                 key_values => [ { name => 'data_transferred' }, { name => 'display' } ],
-                output_template => 'Data Transferred : %s %s',
+                output_template => 'data transferred: %s %s',
                 output_change_bytes => 1,
                 perfdatas => [
-                    { label => 'data_transferred', value => 'data_transferred', template => '%s', 
-                      unit => 'B', min => 0, label_extra_instance => 1, instance_use => 'display' },
-                ],
+                    { template => '%s', unit => 'B', min => 0, label_extra_instance => 1 }
+                ]
             }
-        },
+        }
     ];
 }
 
@@ -94,16 +95,10 @@ sub new {
     
     $options{options}->add_options(arguments => {
         'filter-name:s' => { name => 'filter_name' },
-        'timezone:s'    => { name => 'timezone', default => 'GMT' },
+        'timezone:s'    => { name => 'timezone', default => 'GMT' }
     });
     
     return $self;
-}
-
-sub prefix_pgroup_output {
-    my ($self, %options) = @_;
-    
-    return "Protection group '" . $options{instance_value}->{display} . "' replication ";
 }
 
 sub manage_selection {
@@ -175,15 +170,9 @@ Example: --filter-counters='^progress$'
 
 Filter protection group name (Can be a regexp).
 
-=item B<--warning-*>
+=item B<--warning-*> B<--critical-*>
 
-Threshold warning.
-Can be: 'progress' (%), 'creation' (s), 'duration' (s),
-'physical-bytes-written' (B), 'data-transferred' (B).
-
-=item B<--critical-*>
-
-Threshold critical.
+Thresholds.
 Can be: 'progress' (%), 'creation' (s), 'duration' (s),
 'physical-bytes-written' (B), 'data-transferred' (B).
 
