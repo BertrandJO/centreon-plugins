@@ -270,7 +270,7 @@ sub credentials_token_v2 {
             query_form_post => '',
             url_path => '/api/login',
             header => [
-                'api-token: "' . $self->{token} . '"',
+                'api-token: ' . $self->{token},
                 'Content-Type: application/json'
             ]
         );
